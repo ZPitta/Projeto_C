@@ -5,11 +5,12 @@
 
 void cadastro();
 void consulta();
+void consultaDespesa();
 void alteracao();
 void exclusao_logica();
 void exclusao_fisica();
-void ordena_nome_crescente();
-int busca_codigo();
+void ordenaCodigoDecrescente();
+int buscaNome();
 int recuperacao_backup();
 
 struct clubes{
@@ -26,55 +27,55 @@ int main(){
     char op;
 
     do{
+        system("CLS");
         printf("\n1_ Cadastro De Clube");
         printf("\n2_ Consultar Clubes");
-        printf("\n3_ Alteracao");
-        printf("\n4_ Exclusao Logica");
-        printf("\n5_ Exclusao Fisica");
-        printf("\n6_ Ordenacao");
-        printf("\n7_ Busca Codigo");
-        printf("\n9_ Sair\n");
+        printf("\n3_ Consultar Clubes com Despesas maior que 1 milhao");
+        printf("\n4_ Alteracao");
+        printf("\n5_ Exclusao Logica");
+        printf("\n6_ Exclusao Fisica");
+        printf("\n7_ Ordenacao Pelo Codigo em Ordem Decrescente");
+        printf("\n8_ Busca Pelo Nome");
+        printf("\n9_ Recuperar Backup");
+        printf("\n0_ Sair\n");
         //scanf("%c",&op);
         op= getche();
 
         switch (op){
             case '1': cadastro();
-                system("CLS");
             break;
 
             case '2': consulta();
             break;
 
-            case '3': alteracao();
-                system("CLS");
+            case '3': consultaDespesa();
             break;
 
-            case '4': exclusao_logica();
-                system("CLS");
+            case '4': alteracao();
             break;
 
-            case '5': exclusao_fisica();
-                system("CLS");
+            case '5': exclusao_logica();
             break;
 
-            case '6': ordena_nome_crescente();
-                system("CLS");
+            case '6': exclusao_fisica();
             break;
 
-            case '7': busca_codigo();
+            case '7': ordenaCodigoDecrescente();
             break;
 
-            case '8': recuperacao_backup();
-                system("CLS");
+            case '8': buscaNome();
             break;
 
-            case '9': printf("\nSaindo...");
+            case '9': recuperacao_backup();
+            break;
+
+            case '0': printf("\nSaindo...");
             break;
 
             default : printf("\nOpcao %c invalida", op);
 
         }
-    }while(op!= '9');
+    }while(op!= '0');
 
 
 return 0;
@@ -102,6 +103,7 @@ void cadastro(){
     scanf("%f",&F.despesas);
 
     F.E = 0;
+
     fseek(fptr, 0, 2);
     fwrite(&F, sizeof(F), 1, fptr);
     fclose(fptr);
@@ -127,6 +129,26 @@ void consulta(){
 fclose(fptr);
 }
 
+void consultaDespesa(){
+    if((fptr = fopen("Clubes.Bi","rb"))==NULL){
+        printf("\nErro");
+        exit(1);
+    }
+    fseek(fptr, 0, 0);
+    while(fread(&F, sizeof(F), 1, fptr)){
+        if(F.E == 0){
+            if(F.despesas > 1000000){
+                printf("\nCodigo: %d", F.codigo);
+                printf("\nNome do Clube: %s", F.nome);
+                printf("\nNumero de Funcionarios: %d", F.totalFuncionarios);
+                printf("\nDespesas: %.2f", F.despesas);
+            }
+        }
+    }
+    getch();
+    fclose(fptr);
+}
+
 void alteracao(){
     char aux[25];
     if((fptr = fopen("Clubes.Bi","rb+"))==NULL){
@@ -148,6 +170,7 @@ void alteracao(){
             }
         }
     }
+    fclose(fptr);
 }
 
 void exclusao_logica(){
@@ -170,9 +193,10 @@ void exclusao_logica(){
             }
         }
     }
+    fclose(fptr);
 }
 
-void exclusao_fisica(){
+void exclusao_fisica(){ //nn sei se ta funcionando
     FILE * fptraux, * fptrback;
 
     //1
@@ -213,7 +237,7 @@ void exclusao_fisica(){
     rename("auxiliar.Bi","Clubes.Bi");
 }
 
-void ordena_nome_crescente(){
+void ordenaCodigoDecrescente(){ //nn esta dando certo
     int i, j, n;
     struct clubes Fi, Fj;
 
@@ -230,7 +254,7 @@ void ordena_nome_crescente(){
             fread(&Fi, sizeof(Fi), 1, fptr);
             fseek(fptr, j*sizeof(F), 0);
             fread(&Fj, sizeof(F), 1, fptr);
-            if(strcmp(Fi.nome, Fj.nome)>0){
+            if(strcmp(Fi.codigo, Fj.codigo)>0){
                 fseek(fptr, i*sizeof(F), 0);
                 fwrite(&Fj, sizeof(F), 1, fptr);
                 fseek(fptr, j*sizeof(F), 0);
@@ -241,7 +265,7 @@ void ordena_nome_crescente(){
     fclose(fptr);
 }
 
-int busca_codigo(){
+int buscaNome(){    //nn esta dando certo
     int low, mid, high, n, elem;
 
     if((fptr = fopen("Clubes.Bi","rb"))==NULL){
@@ -259,9 +283,9 @@ int busca_codigo(){
         mid = (low + high)/2;
         fseek(fptr, mid*sizeof(F), 0);
         fread(&F, sizeof(F), 1, fptr);
-        if(F.codigo > elem){
+        if(F.nome > elem){
             high = mid-1;
-        }else if(F.codigo < elem){
+        }else if(F.nome < elem){
             low = mid+1;
         }else{
             fclose(fptr);
@@ -272,7 +296,45 @@ int busca_codigo(){
     return -1;
 }
 
-int recuperacao_backup(){
-    printf("\nFuncao em desenvolvimento.");
+int recuperacao_backup(){ //nn esta dando certo
+    FILE * fptraux, * fptrback;
+
+    //1
+    if((fptr = fopen("Clubes.Bi","rb"))==NULL){
+        printf("\nERRO");
+        exit(1);
+    }
+    if((fptraux = fopen("auxiliar.Bi","wb"))==NULL){
+        printf("\nERRO");
+        exit(1);
+    }
+    if((fptrback = fopen("back.Bi","rb+"))==NULL){
+        if((fptrback = fopen("back.Bi","wb"))==NULL){
+            printf("\nERRO");
+            exit(1);
+        }
+    }
+    fseek(fptr, 0, 0);
+
+    //2
+    while(fread(&F, sizeof(F), 1, fptr)){
+        if(F.E == 1){
+            fseek(fptrback, 0, 2);
+            fwrite(&F, sizeof(F), 1,fptrback);
+        }else{
+            fseek(fptrback, 0, 2);
+            fwrite(&F, sizeof(F), 1, fptraux);
+        }
+    }
+    //3
+    fclose(fptr);
+    fclose(fptraux);
+    fclose(fptrback);
+
+    //4
+    remove("Clubes.Bi");
+    //5
+    rename("auxiliar.Bi","Clubes.Bi");
+    //printf("\nFuncao em desenvolvimento.");
     return 1;
 }
