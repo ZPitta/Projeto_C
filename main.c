@@ -10,8 +10,8 @@ void alteracao();
 void exclusao_logica();
 void exclusao_fisica();
 void ordenaCodigoDecrescente();
-int buscaNome();
-int recuperacao_backup();
+void buscaNome();
+void recuperacao_backup();
 
 struct clubes{
     int codigo;
@@ -31,7 +31,7 @@ int main(){
         printf("\n1_ Cadastro De Clube");
         printf("\n2_ Consultar Clubes");
         printf("\n3_ Consultar Clubes com Despesas maior que 1 milhao");
-        printf("\n4_ Alteracao");
+        printf("\n4_ Alteracao de despesas");
         printf("\n5_ Exclusao Logica");
         printf("\n6_ Exclusao Fisica");
         printf("\n7_ Ordenacao Pelo Codigo em Ordem Decrescente");
@@ -178,18 +178,19 @@ void exclusao_logica(){
     if((fptr = fopen("Clubes.Bi","rb+"))==NULL){
         printf("\nErro");
         exit(1);
-    }
-    printf("\nEntre com o nome do clube a ser encontrado: ");
-    setbuf(stdin, NULL);
-    scanf("%[^\n]",aux);
-    fseek(fptr, 0, 0);
-    while(fread(&F, sizeof(F), 1, fptr)){
-        if(F.E == 0){
-            if(strcmp(F.nome, aux) == 0){
-                F.E = 1;
-                fseek(fptr, ftell(fptr)-sizeof(F),0);
-                fwrite(&F,sizeof(F), 1, fptr);
-                fseek(fptr, 0, 2);
+    }else{
+        printf("\nEntre com o nome do clube a ser encontrado: ");
+        setbuf(stdin, NULL);
+        scanf("%[^\n]",aux);
+        fseek(fptr, 0, 0);
+        while(fread(&F, sizeof(F), 1, fptr)){
+            if(F.E == 0){
+                if(strcmp(F.nome, aux) == 0){
+                    F.E = 1;
+                    fseek(fptr, ftell(fptr)-sizeof(F),0);
+                    fwrite(&F,sizeof(F), 1, fptr);
+                    fseek(fptr, 0, 2);
+                }
             }
         }
     }
@@ -233,11 +234,12 @@ void exclusao_fisica(){ //nn sei se ta funcionando
 
     //4
     remove("Clubes.Bi");
+
     //5
     rename("auxiliar.Bi","Clubes.Bi");
 }
 
-void ordenaCodigoDecrescente(){ //nn esta dando certo
+void ordenaCodigoDecrescente(){
     int i, j, n;
     struct clubes Fi, Fj;
 
@@ -248,13 +250,13 @@ void ordenaCodigoDecrescente(){ //nn esta dando certo
     fseek(fptr, 0, 2);
     n = ftell(fptr) / sizeof(F);
 
-    for(i = 0; i<n; i++){
-        for(j= i+1; j<n; j++){
+    for(i = 0; i < n; i++){
+        for(j = i + 1; j < n; j++){
             fseek(fptr, i*sizeof(Fi), 0);
             fread(&Fi, sizeof(Fi), 1, fptr);
             fseek(fptr, j*sizeof(F), 0);
             fread(&Fj, sizeof(F), 1, fptr);
-            if(strcmp(Fi.codigo, Fj.codigo)>0){
+            if(Fi.codigo < Fj.codigo){
                 fseek(fptr, i*sizeof(F), 0);
                 fwrite(&Fj, sizeof(F), 1, fptr);
                 fseek(fptr, j*sizeof(F), 0);
@@ -265,38 +267,31 @@ void ordenaCodigoDecrescente(){ //nn esta dando certo
     fclose(fptr);
 }
 
-int buscaNome(){    //nn esta dando certo
-    int low, mid, high, n, elem;
+void buscaNome(){    //nn esta dando certo
+    char aux[25];
 
     if((fptr = fopen("Clubes.Bi","rb"))==NULL){
         printf("\nERRO");
         exit(1);
     }
-    printf("\nEntre com o elemento a ser encontrado: ");
-    scanf("%d",&elem);
-    fseek(fptr, 0, 2);
-    n = ftell(fptr)/sizeof(F);
+    printf("\nEntre com o nome a ser encontrado: ");
+    scanf("%[^\n]",aux);
+    fseek(fptr, 0, 0);
 
-    low = 0;
-    high = n-1;
-    while(low < high){
-        mid = (low + high)/2;
-        fseek(fptr, mid*sizeof(F), 0);
-        fread(&F, sizeof(F), 1, fptr);
-        if(F.nome > elem){
-            high = mid-1;
-        }else if(F.nome < elem){
-            low = mid+1;
-        }else{
-            fclose(fptr);
-            return mid;
+    while(fread(&F, sizeof(F), 1, fptr)){
+        if(F.nome == aux){
+            printf("\nCodigo: %d", F.codigo);
+            printf("\nNome do Clube: %s", F.nome);
+            printf("\nNumero de Funcionarios: %d", F.totalFuncionarios);
+            printf("\nDespesas: %.2f", F.despesas);
         }
     }
+
+    getch();
     fclose(fptr);
-    return -1;
 }
 
-int recuperacao_backup(){ //nn esta dando certo
+void recuperacao_backup(){ //nn esta dando certo
     FILE * fptraux, * fptrback;
 
     //1
@@ -320,10 +315,10 @@ int recuperacao_backup(){ //nn esta dando certo
     while(fread(&F, sizeof(F), 1, fptr)){
         if(F.E == 1){
             fseek(fptrback, 0, 2);
-            fwrite(&F, sizeof(F), 1,fptrback);
+            fwrite(&F, sizeof(F), 0,fptrback);
         }else{
             fseek(fptrback, 0, 2);
-            fwrite(&F, sizeof(F), 1, fptraux);
+            fwrite(&F, sizeof(F), 0, fptraux);
         }
     }
     //3
@@ -336,5 +331,4 @@ int recuperacao_backup(){ //nn esta dando certo
     //5
     rename("auxiliar.Bi","Clubes.Bi");
     //printf("\nFuncao em desenvolvimento.");
-    return 1;
 }
