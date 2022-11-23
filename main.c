@@ -197,7 +197,7 @@ void exclusao_logica(){
     fclose(fptr);
 }
 
-void exclusao_fisica(){ //nn sei se ta funcionando
+void exclusao_fisica(){
     FILE * fptraux, * fptrback;
 
     //1
@@ -219,10 +219,10 @@ void exclusao_fisica(){ //nn sei se ta funcionando
 
     //2
     while(fread(&F, sizeof(F), 1, fptr)){
-        if(F.E==0){
+        if(F.E == 0){
             fseek(fptraux, 0, 2);
             fwrite(&F, sizeof(F), 1,fptraux);
-        }else{
+        }else if(F.E == 1){
             fseek(fptrback, 0, 2);
             fwrite(&F, sizeof(F), 1, fptrback);
         }
@@ -267,39 +267,38 @@ void ordenaCodigoDecrescente(){
     fclose(fptr);
 }
 
-void buscaNome(){    //nn esta dando certo
+void buscaNome(){
     char aux[25];
 
-    if((fptr = fopen("Clubes.Bi","rb"))==NULL){
-        printf("\nERRO");
+    if((fptr = fopen("Clubes.Bi","rb+"))==NULL){
+        printf("\nErro");
         exit(1);
-    }
-    printf("\nEntre com o nome a ser encontrado: ");
-    scanf("%[^\n]",aux);
-    fseek(fptr, 0, 0);
+    }else{
+        printf("\nEntre com o nome do clube a ser encontrado: ");
+        setbuf(stdin, NULL);
+        scanf("%[^\n]",aux);
+        fseek(fptr, 0, 0);
 
-    while(fread(&F, sizeof(F), 1, fptr)){
-        if(F.nome == aux){
-            printf("\nCodigo: %d", F.codigo);
-            printf("\nNome do Clube: %s", F.nome);
-            printf("\nNumero de Funcionarios: %d", F.totalFuncionarios);
-            printf("\nDespesas: %.2f", F.despesas);
+        while(fread(&F, sizeof(F), 1, fptr)){
+            if(F.E == 0){
+                if(strcmp(F.nome, aux) == 0){
+                    printf("\nCodigo: %d", F.codigo);
+                    printf("\nNome do Clube: %s", F.nome);
+                    printf("\nNumero de Funcionarios: %d", F.totalFuncionarios);
+                    printf("\nDespesas: %.2f", F.despesas);
+                }
+            }
         }
     }
-
     getch();
     fclose(fptr);
 }
 
 void recuperacao_backup(){ //nn esta dando certo
-    FILE * fptraux, * fptrback;
+    FILE * fptrback;
 
     //1
     if((fptr = fopen("Clubes.Bi","rb"))==NULL){
-        printf("\nERRO");
-        exit(1);
-    }
-    if((fptraux = fopen("auxiliar.Bi","wb"))==NULL){
         printf("\nERRO");
         exit(1);
     }
@@ -312,23 +311,15 @@ void recuperacao_backup(){ //nn esta dando certo
     fseek(fptr, 0, 0);
 
     //2
-    while(fread(&F, sizeof(F), 1, fptr)){
-        if(F.E == 1){
-            fseek(fptrback, 0, 2);
-            fwrite(&F, sizeof(F), 0,fptrback);
-        }else{
-            fseek(fptrback, 0, 2);
-            fwrite(&F, sizeof(F), 0, fptraux);
+    while(fread(&F, sizeof(F), 1, fptrback)){
+        if(F.E==1){
+            F.E = 0;
+            fseek(fptr, 0, 2);
+            fwrite(&F, sizeof(F), 1,fptr);
         }
     }
     //3
     fclose(fptr);
-    fclose(fptraux);
     fclose(fptrback);
 
-    //4
-    remove("Clubes.Bi");
-    //5
-    rename("auxiliar.Bi","Clubes.Bi");
-    //printf("\nFuncao em desenvolvimento.");
 }
